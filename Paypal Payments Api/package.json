@@ -1,0 +1,48 @@
+{
+  "name": "paypal-payments-system",
+  "version": "2.0.0",
+  "description": "Production-ready PayPal Payments System for Business (Node.js + Express 5 + Prisma + PostgreSQL, ES Modules)",
+  "type": "module",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:prod": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "lint": "eslint src",
+    "test": "echo \"No tests configured yet\" && exit 0"
+  },
+  "keywords": ["paypal", "payments", "express", "prisma", "postgresql", "esm"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@paypal/paypal-server-sdk": "^2.4.0",
+    "@prisma/client": "^6.19.0",
+    "axios": "^1.7.9",
+    "bcryptjs": "^3.0.2",
+    "compression": "^1.8.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "envalid": "^8.0.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "uuid": "^11.0.5",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.19.0",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.19.0"
+  }
+}

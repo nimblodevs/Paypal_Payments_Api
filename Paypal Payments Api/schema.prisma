@@ -1,0 +1,103 @@
+// ============================================================
+// Prisma Schema — PayPal Payments System
+// Run `npx prisma migrate dev --name init` to create the DB tables
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// Business user / merchant account that can authenticate
+// against the API to manage and view payments.
+// ------------------------------------------------------------
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String // stored as a bcrypt hash, never plain text
+  fullName  String
+  role      Role     @default(MERCHANT)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+
+  @@map("users")
+}
+
+enum Role {
+  ADMIN
+  MERCHANT
+}
+
+// ------------------------------------------------------------
+// A single payment/order lifecycle record, mirroring the
+// PayPal Order resource. This is our system of record —
+// PayPal remains the source of truth for money movement,
+// but we persist a local copy for reporting/reconciliation.
+// ------------------------------------------------------------
+model Payment {
+  id                  String        @id @default(uuid())
+  // PayPal's own order identifier (returned on order creation)
+  paypalOrderId       String        @unique
+  // PayPal capture id, populated once payment is captured
+  paypalCaptureId     String?
+  amount              Decimal       @db.Decimal(12, 2)
+  currency            String        @default("USD")
+  status              PaymentStatus @default(CREATED)
+  description         String?
+  // Free-form reference the merchant can use (invoice #, order #, etc.)
+  referenceId         String?
+  payerEmail          String?
+  payerId             String?
+  // Raw JSON payloads kept for audit/debugging purposes
+  rawCreateResponse   Json?
+  rawCaptureResponse  Json?
+  failureReason       String?
+
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
+
+  webhookEvents WebhookEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  CREATED // Order created on PayPal, awaiting buyer approval
+  APPROVED // Buyer approved the order on PayPal's side
+  COMPLETED // Payment successfully captured
+  DENIED // Payment was denied
+  FAILED // Capture attempt failed
+  REFUNDED // Payment was refunded
+  CANCELLED // Buyer cancelled before completing checkout
+}
+
+// ------------------------------------------------------------
+// Stores every verified webhook event received from PayPal.
+// Useful for auditing, replay/debugging, and idempotency checks.
+// ------------------------------------------------------------
+model WebhookEvent {
+  id            String   @id @default(uuid())
+  paypalEventId String   @unique
+  eventType     String
+  payload       Json
+  processed     Boolean  @default(false)
+  receivedAt    DateTime @default(now())
+
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  paymentId String?
+
+  @@map("webhook_events")
+}
